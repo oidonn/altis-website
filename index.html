@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altis Advisory — Profit Leak Diagnostic for Food & Beverage Businesses</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep:      #0C0A08;
+      --bg-elevated:  #161210;
+      --bg-card:      #1E1915;
+      --bg-float:     #2A231C;
+      --accent:       #D4922A;
+      --accent-bright:#F0B445;
+      --accent-glow:  rgba(212,146,42,0.28);
+      --accent-dim:   rgba(212,146,42,0.10);
+      --accent-dim2:  rgba(212,146,42,0.18);
+      --text-primary: #F5EFE6;
+      --text-secondary:#9A8B79;
+      --text-dim:     #5A4E42;
+      --border:       rgba(212,146,42,0.11);
+      --border-subtle:rgba(255,255,255,0.055);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Playfair Display', serif;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ---------- NAV ---------- */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      background: rgba(12,10,8,0.82);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .nav-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 28px;
+      height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(140deg, #D4922A 0%, #F0B445 100%);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 14px rgba(212,146,42,0.38);
+    }
+    .nav-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: color 0.18s ease, background 0.18s ease;
+    }
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.055); }
+    .nav-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ---------- BUTTONS ---------- */
+    .btn-primary {
+      display: inline-block;
+      text-decoration: none;
+      background: linear-gradient(138deg, #C8881F 0%, #F0B445 100%);
+      color: #0C0A08;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 13px 28px;
+      border-radius: 10px;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 22px rgba(212,146,42,0.38), 0 1px 4px rgba(0,0,0,0.35);
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, opacity 0.15s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 36px rgba(212,146,42,0.5), 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 12px rgba(212,146,42,0.3); }
+    .btn-primary:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; }
+
+    .btn-ghost {
+      display: inline-block;
+      text-decoration: none;
+      background: transparent;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      padding: 13px 28px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.2s ease;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(212,146,42,0.45);
+      background: rgba(212,146,42,0.07);
+      transform: translateY(-1px);
+    }
+    .btn-ghost:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; }
+
+    /* ---------- SECTION BADGE ---------- */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-dim2);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 22px;
+    }
+    .glow-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-bright);
+      box-shadow: 0 0 8px 2px rgba(240,180,69,0.55);
+      flex-shrink: 0;
+    }
+
+    /* ---------- CARDS ---------- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow:
+        0 4px 28px rgba(0,0,0,0.42),
+        0 1px 4px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.038);
+    }
+    .card-elevated {
+      background: var(--bg-float);
+      border: 1px solid rgba(212,146,42,0.18);
+      border-radius: 20px;
+      box-shadow:
+        0 10px 48px rgba(0,0,0,0.55),
+        0 2px 8px rgba(0,0,0,0.32),
+        inset 0 1px 0 rgba(255,255,255,0.042);
+    }
+
+    /* ---------- CHECK ITEM ---------- */
+    .check-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .check-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-dim2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ---------- HERO ---------- */
+    .hero-bg {
+      background:
+        radial-gradient(ellipse 75% 55% at 50% -10%, rgba(212,146,42,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 15% 70%, rgba(212,146,42,0.05) 0%, transparent 60%),
+        var(--bg-deep);
+    }
+
+    /* ---------- STAT GRID ---------- */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .stat-cell {
+      padding: 28px 30px;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 9px;
+      line-height: 1.55;
+    }
+
+    /* ---------- PROCESS STEP ---------- */
+    .step-row {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 28px;
+      padding-bottom: 52px;
+      position: relative;
+    }
+    .step-row:last-child { padding-bottom: 0; }
+    .step-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-num {
+      width: 54px;
+      height: 54px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-num-active {
+      background: linear-gradient(138deg, #C8881F, #F0B445);
+      box-shadow: 0 4px 22px rgba(212,146,42,0.38);
+    }
+    .step-num-inactive {
+      background: var(--bg-card);
+      border: 1px solid rgba(212,146,42,0.28);
+    }
+    .step-connector {
+      width: 1px;
+      flex: 1;
+      margin-top: 12px;
+      background: linear-gradient(to bottom, rgba(212,146,42,0.35), rgba(212,146,42,0.04));
+    }
+
+    /* ---------- FAQ ---------- */
+    .faq-item {
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 3px;
+    }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    .faq-icon {
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      flex-shrink: 0;
+    }
+    details[open] .faq-icon { transform: rotate(45deg); }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 960px) {
+      .nav-links { display: none; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-cell { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+      .stat-cell:nth-child(odd) { border-right: 1px solid var(--border-subtle); }
+      .stat-cell:last-child, .stat-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+    }
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr !important; gap: 48px !important; }
+      .three-col { grid-template-columns: 1fr !important; }
+      .four-col { grid-template-columns: 1fr 1fr !important; }
+      .include-grid { grid-template-columns: 1fr !important; }
+      .price-sticky { position: static !important; }
+      .benefit-span2 { grid-column: span 1 !important; }
+      .benefit-span2-inner { grid-template-columns: 1fr !important; }
+      .vs-grid { grid-template-columns: 1fr !important; }
+      .vs-divider { display: none !important; }
+      .step-row { grid-template-columns: 56px 1fr; gap: 18px; }
+    }
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr !important; }
+      .stat-cell:nth-child(odd) { border-right: none; }
+      .hero-ctas { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-ghost { width: 100%; text-align: center; }
+      .cta-form { flex-direction: column; }
+      .cta-form input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <path d="M3 16L10 4L17 16" stroke="#0C0A08" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 11.5H14" stroke="#0C0A08" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="nav-logo-text">Altis Advisory</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="#offer">The Diagnostic</a>
+      <a class="nav-link" href="#process">Process</a>
+      <a class="nav-link" href="#who">Who It's For</a>
+      <a class="nav-link" href="#faq">FAQ</a>
+    </div>
+    <a class="btn-primary" href="#cta" style="font-size:13px; padding:10px 20px;">Book a Call</a>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero-bg" style="padding:96px 28px 80px; text-align:center; position:relative; overflow:hidden;">
+  <!-- Ambient glow -->
+  <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:340px;background:radial-gradient(ellipse at center,rgba(212,146,42,0.11) 0%,transparent 70%);pointer-events:none;"></div>
+
+  <div style="max-width:740px;margin:0 auto;position:relative;">
+    <div class="badge">
+      <span class="glow-dot"></span>
+      Profit Leak Diagnostic — Starting at $999
+    </div>
+
+    <h1 style="font-size:clamp(34px,5.5vw,62px);font-weight:800;color:var(--text-primary);margin-bottom:24px;letter-spacing:-0.04em;line-height:1.08;">
+      Your Business Is Generating Revenue.<br>
+      <em style="font-style:italic;background:linear-gradient(138deg,#D4922A,#F5C050);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Find Out Why More Profit<br>Isn't Reaching the Bottom Line.</em>
+    </h1>
+
+    <p style="font-size:17px;color:var(--text-secondary);max-width:520px;margin:0 auto 40px;line-height:1.72;font-weight:400;">
+      A structured financial and operational review for coffee shops, restaurants, and multi-location food businesses — delivering a clear action plan in 7–10 business days.
+    </p>
+
+    <div class="hero-ctas" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a class="btn-primary" href="#cta">Start Your Diagnostic</a>
+      <a class="btn-ghost" href="#offer">See What's Included</a>
+    </div>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:18px;">No retainer. No ongoing commitment. Results in 7–10 business days.</p>
+  </div>
+
+  <!-- Stats row -->
+  <div style="max-width:920px;margin:56px auto 0;">
+    <div class="card stat-grid">
+      <div class="stat-cell">
+        <div class="stat-num">$999</div>
+        <div class="stat-label">Starting price for<br>single-location businesses</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">7–10</div>
+        <div class="stat-label">Business days to<br>full findings report</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">12mo</div>
+        <div class="stat-label">Financial performance<br>review window</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" style="color:var(--accent);">$1M+</div>
+        <div class="stat-label">Operators we serve,<br>up to $10M+ revenue</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THE PROBLEM ===================== -->
+<section style="padding:100px 28px;background:var(--bg-elevated);">
+  <div style="max-width:1120px;margin:0 auto;">
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+      <!-- Left -->
+      <div>
+        <div class="badge">The Problem</div>
+        <h2 style="font-size:clamp(26px,3.2vw,40px);font-weight:700;color:var(--text-primary);margin-bottom:20px;">
+          "If sales are strong, why isn't more profit reaching the bottom line?"
+        </h2>
+        <p style="font-size:15.5px;color:var(--text-secondary);line-height:1.74;margin-bottom:32px;">
+          Most food business owners feel this. Revenue is growing, the operation is busy — but the owner's take-home isn't moving. The money is leaking somewhere, and standard bookkeeping doesn't tell you where.
+        </p>
+        <a class="btn-primary" href="#cta">Diagnose Your Profit Leak</a>
+      </div>
+
+      <!-- Right: pain points grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="four-col">
+        <div class="card" style="padding:22px 20px;">
+          <div style="font-size:22px;margin-bottom:12px;">📈</div>
+          <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Revenue grows, profit doesn't</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Sales look healthy but owner income stays flat</div>
+        </div>
+        <div class="card" style="padding:22px 20px;">
+          <div style="font-size:22px;margin-bottom:12px;">💸</div>
+          <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Cash feels tighter than it should</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Despite healthy sales, cash always feels thin</div>
+        </div>
+        <div class="card" style="padding:22px 20px;">
+          <div style="font-size:22px;margin-bottom:12px;">👷</div>
+          <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Labor costs feel too high</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Scheduling never quite optimizes staffing costs</div>
+        </div>
+        <div class="card" style="padding:22px 20px;">
+          <div style="font-size:22px;margin-bottom:12px;">📊</div>
+          <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Reports exist, clarity doesn't</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Financial data is there, but decisions still feel unclear</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CORE OFFER ===================== -->
+<section id="offer" style="padding:100px 28px;background:var(--bg-deep);">
+  <div style="max-width:1120px;margin:0 auto;">
+    <div style="text-align:center;max-width:600px;margin:0 auto 60px;">
+      <div class="badge">The Diagnostic</div>
+      <h2 style="font-size:clamp(26px,3.2vw,40px);font-weight:700;color:var(--text-primary);margin-bottom:16px;">
+        Everything Included.<br>Nothing Hidden.
+      </h2>
+      <p style="font-size:15.5px;color:var(--text-secondary);line-height:1.72;">
+        A single fixed-fee engagement. No retainers, no ongoing commitments. You get a complete picture of where profit is leaking — and exactly what to do about it.
+      </p>
+    </div>
+
+    <!-- Two-column: deliverables + price card -->
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 370px;gap:28px;align-items:start;">
+      <!-- Deliverables -->
+      <div class="card" style="padding:40px 42px;">
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.11em;text-transform:uppercase;color:var(--accent);margin-bottom:26px;">What You Receive</p>
+        <div class="include-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;">
+          <!-- Item helper: repeated manually for clarity -->
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">12-Month P&amp;L Review</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Full financial performance analysis</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">P&amp;L Normalization</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Cleaned and categorized data</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Labor Cost Analysis</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Identify staffing inefficiencies</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Food &amp; Bev Cost Analysis</div>
+              <div style="font-size:12px;color:var(--text-secondary);">COGS and margin breakdown</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Revenue &amp; Product Mix</div>
+              <div style="font-size:12px;color:var(--text-secondary);">What's selling vs. what's profitable</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Location Benchmarking</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Multi-unit performance comparison</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Cash Flow &amp; Working Capital</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Liquidity and capital review</div>
+            </div>
+          </div>
+          <div class="check-row">
+            <div class="check-icon"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Executive Summary</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Full written findings report</div>
+            </div>
+          </div>
+          <!-- Highlighted row -->
+          <div class="check-row" style="grid-column:span 2;background:rgba(212,146,42,0.06);border:1px solid rgba(212,146,42,0.15);border-radius:10px;padding:14px 16px;">
+            <div class="check-icon" style="background:rgba(240,180,69,0.18);border-color:rgba(212,146,42,0.35);">
+              <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#F0B445" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--accent-bright);margin-bottom:3px;">90-Day Action Roadmap</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Prioritized, quantified improvement opportunities with specific actions to take in the next 90 days</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price card -->
+      <div class="price-sticky" style="position:sticky;top:86px;">
+        <div class="card-elevated" style="padding:36px 30px;">
+          <div style="text-align:center;padding-bottom:26px;margin-bottom:26px;border-bottom:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:14px;">Profit Leak Diagnostic</div>
+            <div style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.04em;">STARTING AT</div>
+            <div style="display:flex;align-items:flex-start;justify-content:center;gap:3px;">
+              <span style="font-size:19px;font-weight:600;color:var(--text-secondary);margin-top:10px;">$</span>
+              <span style="font-family:'Playfair Display',serif;font-size:68px;font-weight:800;color:var(--text-primary);letter-spacing:-0.05em;line-height:1;">999</span>
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-top:6px;">Single-location businesses</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Higher for multi-location operators</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:28px;">
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);"><span class="glow-dot"></span>All 9 deliverables included</div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);"><span class="glow-dot"></span>7–10 business day delivery</div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);"><span class="glow-dot"></span>No retainer required</div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);"><span class="glow-dot"></span>Works with imperfect books</div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);"><span class="glow-dot"></span>Institutional-level analysis</div>
+          </div>
+          <a class="btn-primary" href="#cta" style="display:block;text-align:center;width:100%;">Start Your Diagnostic</a>
+          <p style="font-size:12px;color:var(--text-dim);text-align:center;margin-top:14px;">For operators generating $1M–$10M+ annually</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BENEFITS ===================== -->
+<section style="padding:100px 28px;background:var(--bg-elevated);">
+  <div style="max-width:1120px;margin:0 auto;">
+    <div style="text-align:center;max-width:540px;margin:0 auto 60px;">
+      <div class="badge">Why It Works</div>
+      <h2 style="font-size:clamp(26px,3.2vw,40px);font-weight:700;color:var(--text-primary);">
+        Five Ways the Diagnostic<br>Changes the Business
+      </h2>
+    </div>
+
+    <div class="three-col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+      <!-- B1 -->
+      <div class="card" style="padding:30px 26px;">
+        <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-0.045em;line-height:1;margin-bottom:18px;">01</div>
+        <h3 style="font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Find Hidden Profit Opportunities</h3>
+        <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.7;">Identify margin leakage in labor, pricing, purchasing, and operational execution before it compounds further.</p>
+      </div>
+      <!-- B2 -->
+      <div class="card" style="padding:30px 26px;">
+        <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-0.045em;line-height:1;margin-bottom:18px;">02</div>
+        <h3 style="font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Improve Cash Flow</h3>
+        <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.7;">Understand exactly why cash may be tight despite healthy sales — and what to do about it this quarter.</p>
+      </div>
+      <!-- B3 -->
+      <div class="card" style="padding:30px 26px;">
+        <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-0.045em;line-height:1;margin-bottom:18px;">03</div>
+        <h3 style="font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Benchmark Store Performance</h3>
+        <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.7;">Compare locations, channels, and product mix to identify which units underperform and why.</p>
+      </div>
+      <!-- B4 -->
+      <div class="card" style="padding:30px 26px;">
+        <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-0.045em;line-height:1;margin-bottom:18px;">04</div>
+        <h3 style="font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Turn Data Into Action</h3>
+        <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.7;">You receive clear recommendations and a 90-day roadmap — not just charts and reports that sit on a shelf.</p>
+      </div>
+      <!-- B5 (wide) -->
+      <div class="card benefit-span2" style="padding:30px 28px;grid-column:span 2;">
+        <div class="benefit-span2-inner" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-0.045em;line-height:1;margin-bottom:18px;">05</div>
+            <h3 style="font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Objective Outside Perspective</h3>
+            <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.7;">Independent analysis grounded in institutional finance — without hiring a full-time CFO or finance team.</p>
+          </div>
+          <div style="background:var(--bg-deep);border-radius:12px;padding:22px;border:1px solid var(--border);">
+            <p style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;">Founder Background</p>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-secondary);"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>Institutional finance background</div>
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-secondary);"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>Cash flow modeling expertise</div>
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-secondary);"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>Structured analytical rigor</div>
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-secondary);"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>Independent operator focus</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROCESS ===================== -->
+<section id="process" style="padding:100px 28px;background:var(--bg-deep);">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="badge">The Process</div>
+      <h2 style="font-size:clamp(26px,3.2vw,40px);font-weight:700;color:var(--text-primary);">
+        From Data to Decision<br>in 7–10 Business Days
+      </h2>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-row">
+      <div class="step-col">
+        <div class="step-num step-num-active">
+          <span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:#0C0A08;">1</span>
+        </div>
+        <div class="step-connector"></div>
+      </div>
+      <div style="padding-top:10px;">
+        <h3 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Share Your Data</h3>
+        <p style="font-size:15px;color:var(--text-secondary);line-height:1.72;margin-bottom:18px;">Send your last 12 months of P&Ls, payroll summaries, POS exports, and vendor reports (if available). Perfect books are not required.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:4px 11px;">P&amp;L Statements</span>
+          <span style="font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:4px 11px;">Payroll Data</span>
+          <span style="font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:4px 11px;">POS Exports</span>
+          <span style="font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:4px 11px;">Vendor Reports</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-row">
+      <div class="step-col">
+        <div class="step-num step-num-inactive">
+          <span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--accent);">2</span>
+        </div>
+        <div class="step-connector"></div>
+      </div>
+      <div style="padding-top:10px;">
+        <h3 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">We Run the Analysis</h3>
+        <p style="font-size:15px;color:var(--text-secondary);line-height:1.72;">Our team normalizes your financials, models unit economics, benchmarks performance across locations, and identifies exactly where margin is leaking — using the same analytical rigor applied in institutional finance.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-row">
+      <div class="step-col">
+        <div class="step-num step-num-inactive">
+          <span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--accent);">3</span>
+        </div>
+      </div>
+      <div style="padding-top:10px;">
+        <h3 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Receive Your Report &amp; Action Plan</h3>
+        <p style="font-size:15px;color:var(--text-secondary);line-height:1.72;margin-bottom:22px;">You receive a full executive summary of findings and a 90-day action roadmap with quantified improvement opportunities — ready to implement immediately.</p>
+        <a class="btn-primary" href="#cta" style="font-size:14px;padding:11px 24px;">Get Started →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHO IT'S FOR ===================== -->
+<section id="who" style="padding:100px 28px;background:var(--bg-elevated);">
+  <div style="max-width:1120px;margin:0 auto;">
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+      <div>
+        <div class="badge">Ideal Clients</div>
+        <h2 style="font-size:clamp(24px,3vw,36px);font-weight:700;color:var(--text-primary);margin-bottom:18px;">Built for Independent<br>Food &amp; Beverage Businesses</h2>
+        <p style="font-size:15.5px;color:var(--text-secondary);line-height:1.74;margin-bottom:30px;">We work exclusively with food and beverage businesses — not general SMBs. Our frameworks are built around your cost structure, POS data, and operational realities.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;gap:15px;">
+            <div style="width:42px;height:42px;border-radius:11px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">☕</div>
+            <div>
+              <div style="font-size:14.5px;font-weight:600;color:var(--text-primary);">Independent Coffee Shops &amp; Cafés</div>
+              <div style="font-size:12.5px;color:var(--text-secondary);">Single or multi-location operators</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:15px;">
+            <div style="width:42px;height:42px;border-radius:11px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">🍽️</div>
+            <div>
+              <div style="font-size:14.5px;font-weight:600;color:var(--text-primary);">Specialty Food Operators</div>
+              <div style="font-size:12.5px;color:var(--text-secondary);">Bakeries, fast casual, food halls</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:15px;">
+            <div style="width:42px;height:42px;border-radius:11px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">📍</div>
+            <div>
+              <div style="font-size:14.5px;font-weight:600;color:var(--text-primary);">Multi-Location Hospitality Businesses</div>
+              <div style="font-size:12.5px;color:var(--text-secondary);">Operators with 2–10+ units</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-elevated" style="padding:34px 30px;">
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;">Revenue Profile</p>
+        <div style="margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13.5px;color:var(--text-secondary);">Annual Revenue</span>
+            <span style="font-size:13.5px;font-weight:600;color:var(--text-primary);">$1M – $10M+</span>
+          </div>
+          <div style="height:5px;background:var(--bg-deep);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:76%;background:linear-gradient(90deg,#C8881F,#F0B445);border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:20px 0;"></div>
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Not a fit for:</p>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div style="font-size:13px;color:var(--text-secondary);display:flex;gap:10px;align-items:center;"><span style="color:var(--text-dim);font-size:16px;line-height:1;">×</span>Operators under $500K revenue</div>
+          <div style="font-size:13px;color:var(--text-secondary);display:flex;gap:10px;align-items:center;"><span style="color:var(--text-dim);font-size:16px;line-height:1;">×</span>Non-food / hospitality businesses</div>
+          <div style="font-size:13px;color:var(--text-secondary);display:flex;gap:10px;align-items:center;"><span style="color:var(--text-dim);font-size:16px;line-height:1;">×</span>Franchise chains or corporate groups</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== NOT YOUR ACCOUNTANT ===================== -->
+<section style="padding:100px 28px;background:var(--bg-deep);">
+  <div style="max-width:960px;margin:0 auto;text-align:center;">
+    <div class="badge">How We're Different</div>
+    <h2 style="font-size:clamp(24px,3vw,38px);font-weight:700;color:var(--text-primary);margin-bottom:48px;">
+      Not Your Accountant.<br>Not Your Bookkeeper.
+    </h2>
+
+    <div class="vs-grid" style="display:grid;grid-template-columns:1fr 52px 1fr;gap:16px;align-items:stretch;">
+      <!-- Traditional -->
+      <div class="card" style="padding:30px 28px;text-align:left;">
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:20px;">Traditional Accountant / Bookkeeper</p>
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div style="font-size:13.5px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--text-dim);flex-shrink:0;">◦</span>Records transactions and expenses</div>
+          <div style="font-size:13.5px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--text-dim);flex-shrink:0;">◦</span>Prepares tax filings and compliance reports</div>
+          <div style="font-size:13.5px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--text-dim);flex-shrink:0;">◦</span>Focuses on historical accuracy</div>
+          <div style="font-size:13.5px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--text-dim);flex-shrink:0;">◦</span>Tells you what happened</div>
+        </div>
+      </div>
+      <!-- VS -->
+      <div class="vs-divider" style="display:flex;align-items:center;justify-content:center;">
+        <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:800;color:var(--text-dim);writing-mode:vertical-rl;letter-spacing:0.12em;">VS</span>
+      </div>
+      <!-- Altis -->
+      <div class="card-elevated" style="padding:30px 28px;text-align:left;border-color:rgba(212,146,42,0.22);">
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;">Altis Advisory</p>
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div style="font-size:13.5px;color:var(--text-primary);display:flex;gap:10px;align-items:flex-start;"><span class="glow-dot" style="margin-top:5px;flex-shrink:0;"></span>Analyzes why profitability is changing</div>
+          <div style="font-size:13.5px;color:var(--text-primary);display:flex;gap:10px;align-items:flex-start;"><span class="glow-dot" style="margin-top:5px;flex-shrink:0;"></span>Identifies where margin is leaking</div>
+          <div style="font-size:13.5px;color:var(--text-primary);display:flex;gap:10px;align-items:flex-start;"><span class="glow-dot" style="margin-top:5px;flex-shrink:0;"></span>Focuses on operational profitability</div>
+          <div style="font-size:13.5px;color:var(--text-primary);display:flex;gap:10px;align-items:flex-start;"><span class="glow-dot" style="margin-top:5px;flex-shrink:0;"></span>Tells you what to do about it</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section id="faq" style="padding:100px 28px;background:var(--bg-elevated);">
+  <div style="max-width:740px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:58px;">
+      <div class="badge">FAQ</div>
+      <h2 style="font-size:clamp(26px,3.2vw,40px);font-weight:700;color:var(--text-primary);">Common Questions</h2>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:3px;">
+      <!-- Q1 -->
+      <details class="card faq-item">
+        <summary style="padding:22px 26px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.018)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);padding-right:18px;">How is this different from an accountant or bookkeeper?</span>
+          <div class="faq-icon" style="width:26px;height:26px;border-radius:7px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1V10M1 5.5H10" stroke="#D4922A" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </summary>
+        <div style="padding:0 26px 22px;border-top:1px solid var(--border);padding-top:18px;">
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.74;">Accountants and bookkeepers focus on recordkeeping, taxes, and compliance. We focus on why profitability is changing, where margin is leaking, and what operational decisions can improve performance.</p>
+        </div>
+      </details>
+
+      <!-- Q2 -->
+      <details class="card faq-item">
+        <summary style="padding:22px 26px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.018)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);padding-right:18px;">What information do you need to get started?</span>
+          <div class="faq-icon" style="width:26px;height:26px;border-radius:7px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1V10M1 5.5H10" stroke="#D4922A" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </summary>
+        <div style="padding:0 26px 22px;border-top:1px solid var(--border);padding-top:18px;">
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.74;margin-bottom:12px;">Most engagements start with:</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:14px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--accent);">→</span>Last 12 months of P&Ls</div>
+            <div style="font-size:14px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--accent);">→</span>Payroll summaries</div>
+            <div style="font-size:14px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--accent);">→</span>POS sales exports</div>
+            <div style="font-size:14px;color:var(--text-secondary);display:flex;gap:10px;"><span style="color:var(--accent);">→</span>Vendor or purchasing reports (if available)</div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Q3 -->
+      <details class="card faq-item">
+        <summary style="padding:22px 26px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.018)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);padding-right:18px;">What if our books aren't clean?</span>
+          <div class="faq-icon" style="width:26px;height:26px;border-radius:7px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1V10M1 5.5H10" stroke="#D4922A" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </summary>
+        <div style="padding:0 26px 22px;border-top:1px solid var(--border);padding-top:18px;">
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.74;">That's common. Perfect books are not required. Our process is built to work with real-world operator data and identify actionable trends even when reporting is imperfect.</p>
+        </div>
+      </details>
+
+      <!-- Q4 -->
+      <details class="card faq-item">
+        <summary style="padding:22px 26px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.018)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);padding-right:18px;">We already have a GM or operations manager — why would we need this?</span>
+          <div class="faq-icon" style="width:26px;height:26px;border-radius:7px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1V10M1 5.5H10" stroke="#D4922A" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </summary>
+        <div style="padding:0 26px 22px;border-top:1px solid var(--border);padding-top:18px;">
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.74;">Your GM runs the business day-to-day. We provide an independent financial and operational layer focused on cross-location performance, margin variance, and cash flow optimization — the layer your GM typically doesn't have time for.</p>
+        </div>
+      </details>
+
+      <!-- Q5 -->
+      <details class="card faq-item">
+        <summary style="padding:22px 26px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.018)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);padding-right:18px;">What happens after the diagnostic?</span>
+          <div class="faq-icon" style="width:26px;height:26px;border-radius:7px;background:var(--accent-dim);border:1px solid var(--accent-dim2);display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1V10M1 5.5H10" stroke="#D4922A" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </summary>
+        <div style="padding:0 26px 22px;border-top:1px solid var(--border);padding-top:18px;">
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.74;">You receive a full findings report and 90-day action plan. If implementation support is needed, optional advisory services may be available on a case-by-case basis.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section id="cta" style="padding:120px 28px;background:var(--bg-deep);position:relative;overflow:hidden;">
+  <!-- Ambient glows -->
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:400px;background:radial-gradient(ellipse at center,rgba(212,146,42,0.1) 0%,transparent 70%);pointer-events:none;"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,146,42,0.28),transparent);"></div>
+
+  <div style="max-width:680px;margin:0 auto;text-align:center;position:relative;">
+    <div class="badge" style="margin-bottom:28px;">Start Today</div>
+    <h2 style="font-size:clamp(30px,4.5vw,52px);font-weight:800;color:var(--text-primary);margin-bottom:18px;letter-spacing:-0.04em;line-height:1.1;">
+      Find the Profit<br>
+      <em style="font-style:italic;background:linear-gradient(138deg,#D4922A,#F5C050);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Already in Your Business</em>
+    </h2>
+    <p style="font-size:16.5px;color:var(--text-secondary);line-height:1.72;margin-bottom:44px;max-width:480px;margin-left:auto;margin-right:auto;">
+      Book a brief call to see if the Profit Leak Diagnostic is the right fit. No commitment required.
+    </p>
+
+    <div class="cta-form" style="display:flex;gap:12px;max-width:460px;margin:0 auto 18px;flex-wrap:wrap;justify-content:center;">
+      <input
+        type="email"
+        placeholder="your@email.com"
+        style="flex:1;min-width:210px;background:var(--bg-card);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 17px;font-size:15px;color:var(--text-primary);font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s ease;"
+        onfocus="this.style.borderColor='rgba(212,146,42,0.48)'"
+        onblur="this.style.borderColor='rgba(255,255,255,0.1)'"
+      />
+      <button class="btn-primary" onclick="alert('Thank you! We\'ll be in touch shortly.')">Book a Call</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--text-dim);">Serving food &amp; beverage businesses generating $1M–$10M+ annually</p>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer style="padding:38px 28px;border-top:1px solid var(--border-subtle);background:var(--bg-deep);">
+  <div style="max-width:1120px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+    <div style="display:flex;align-items:center;gap:9px;">
+      <div style="width:28px;height:28px;background:linear-gradient(140deg,#D4922A,#F0B445);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 16L10 4L17 16" stroke="#0C0A08" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 11.5H14" stroke="#0C0A08" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </div>
+      <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--text-primary);">Altis Advisory</span>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-dim);">© 2026 Altis Advisory · Profit Recovery &amp; Unit Economics Advisory</div>
+    <div style="display:flex;gap:20px;">
+      <a href="mailto:info@hachimitsuusa.com" style="font-size:13px;color:var(--text-secondary);text-decoration:none;transition:color 0.18s ease;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">Contact</a>
+      <a href="#" style="font-size:13px;color:var(--text-secondary);text-decoration:none;transition:color 0.18s ease;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
